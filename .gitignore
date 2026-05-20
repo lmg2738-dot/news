@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+.pnp.*
+
+# next
+.next/
+out/
+
+# env & secrets
+.env
+.env*.local
+config.json
+
+# python
+.venv/
+__pycache__/
+*.pyc
+data/
+
+# misc
+.DS_Store
+*.pem
+.vercel
