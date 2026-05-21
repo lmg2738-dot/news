@@ -9,7 +9,8 @@
     "lint": "next lint",
     "batch": "tsx scripts/batch.ts",
     "batch:once": "tsx scripts/run-once.ts",
-    "batch:remote": "tsx scripts/trigger-remote.ts"
+    "batch:remote": "tsx scripts/trigger-remote.ts",
+    "diagnose": "tsx scripts/diagnose.ts"
   },
   "dependencies": {
     "@vercel/blob": "^0.27.3",

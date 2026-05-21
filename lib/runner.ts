@@ -11,44 +11,92 @@ import { formatTelegramMessage, sendTelegram } from "./telegram";
 export type RunResult = {
   ok: boolean;
   newCount: number;
+  syncedCount: number;
+  collectedCount: number;
   totalVisible: number;
+  telegramSent: number;
+  blobConfigured: boolean;
   message: string;
+  error?: string;
 };
 
 export async function runNewsCycle(): Promise<RunResult> {
+  const blobConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
   const config = getConfig();
   const state = await loadState();
   state.articles = dedupeArticles(state.articles);
 
   const collected = await collectArticles(config.keywords);
+  let syncedCount = 0;
   let newCount = 0;
+  let telegramSent = 0;
 
+  // 1) 수집된 기사는 텔레그램 전송 여부와 관계없이 웹 피드에 반영
   for (const art of collected) {
-    if (newCount >= MAX_NEW_PER_CYCLE) break;
-    if (state.sent[art.hash]) continue;
-
     const stored = toStoredArticle(art);
-    await sendTelegram(
-      config.telegramBotToken,
-      config.telegramChatId,
-      formatTelegramMessage(stored)
-    );
-
-    state.sent[art.hash] = stored.addedAt;
+    const before = state.articles.length;
     state.articles = dedupeArticles([stored, ...state.articles]);
+    if (state.articles.length >= before) syncedCount += 1;
+  }
+
+  // 2) 아직 보내지 않은 기사만 텔레그램 전송 (회당 최대 5건)
+  for (const art of collected) {
+    if (state.sent[art.hash]) continue;
+    if (newCount >= MAX_NEW_PER_CYCLE) break;
+
+    const stored =
+      state.articles.find((a) => a.hash === art.hash) ??
+      toStoredArticle(art);
+
+    try {
+      const ok = await sendTelegram(
+        config.telegramBotToken,
+        config.telegramChatId,
+        formatTelegramMessage(stored)
+      );
+      if (ok) {
+        telegramSent += 1;
+        state.sent[art.hash] = stored.addedAt;
+      }
+    } catch (e) {
+      console.error("[telegram]", art.hash, e);
+    }
     newCount += 1;
   }
 
-  await saveState(state);
+  try {
+    await saveState(state);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "저장 실패";
+    const visible = getVisibleArticles(state.articles);
+    return {
+      ok: false,
+      newCount,
+      syncedCount,
+      collectedCount: collected.length,
+      totalVisible: visible.length,
+      telegramSent,
+      blobConfigured,
+      message: msg,
+      error: msg,
+    };
+  }
+
   const visible = getVisibleArticles(state.articles);
 
   return {
     ok: true,
     newCount,
+    syncedCount,
+    collectedCount: collected.length,
     totalVisible: visible.length,
+    telegramSent,
+    blobConfigured,
     message:
-      newCount > 0
-        ? `새 기사 ${newCount}건 전송·저장 (표시 ${visible.length}건)`
-        : `새 기사 없음 (표시 ${visible.length}건)`,
+      collected.length === 0
+        ? "수집된 뉴스 없음"
+        : newCount > 0
+          ? `수집 ${collected.length}건 · 웹 반영 ${syncedCount}건 · 텔레그램 ${telegramSent}건 · 표시 ${visible.length}건`
+          : `수집 ${collected.length}건 · 웹 반영 ${syncedCount}건 (이미 전송된 기사) · 표시 ${visible.length}건`,
   };
 }

@@ -3,13 +3,19 @@ import {
   todayKST,
   yesterdayKST,
 } from "@/lib/dates";
-import { getVisibleArticles, loadState } from "@/lib/storage";
+import {
+  getVisibleArticles,
+  isBlobConfigured,
+  loadState,
+} from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const blobOk = isBlobConfigured();
   const state = await loadState();
   const articles = getVisibleArticles(state.articles);
+  const storedTotal = state.articles.length;
   const today = todayKST();
   const yesterday = yesterdayKST();
   const todayCount = articles.filter((a) => a.day === today).length;
@@ -33,9 +39,23 @@ export default async function HomePage() {
 
       {articles.length === 0 ? (
         <p className="empty">
-          표시할 뉴스가 없습니다.
+          표시할 뉴스가 없습니다 ({today} · {yesterday} 기준).
           <br />
-          Cron이 동작하면 새 기사가 여기에 쌓입니다.
+          {!blobOk ? (
+            <>
+              Vercel Storage → <strong>Blob</strong> 연결이 필요합니다. 연결 후{" "}
+              <code>/api/cron</code> 또는 GitHub Actions 배치가 돌아야 저장됩니다.
+            </>
+          ) : storedTotal > 0 ? (
+            <>
+              저장된 기사 {storedTotal}건이 있으나 당일·어제가 아니어서 숨겨졌습니다.
+            </>
+          ) : (
+            <>
+              GitHub Actions(10분) 또는 <code>/api/cron</code>으로 수집을
+              실행하세요. 상태: <a href="/api/status">/api/status</a>
+            </>
+          )}
         </p>
       ) : (
         <ul className="timeline">

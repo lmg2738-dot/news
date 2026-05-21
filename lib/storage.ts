@@ -15,14 +15,30 @@ function defaultState(): AppState {
   return { sent: {}, articles: [] };
 }
 
+export function isBlobConfigured(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+function pickLatestStateBlob(
+  blobs: { pathname: string; url: string; uploadedAt?: Date | string }[]
+) {
+  const matches = blobs.filter((b) => b.pathname === STATE_PATHNAME);
+  const candidates = matches.length > 0 ? matches : blobs;
+  return candidates.sort((a, b) => {
+    const ta = new Date(a.uploadedAt ?? 0).getTime();
+    const tb = new Date(b.uploadedAt ?? 0).getTime();
+    return tb - ta;
+  })[0];
+}
+
 export async function loadState(): Promise<AppState> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!isBlobConfigured()) {
     return defaultState();
   }
 
   try {
     const { blobs } = await list({ prefix: "cj-news/" });
-    const blob = blobs.find((b) => b.pathname === STATE_PATHNAME) ?? blobs[0];
+    const blob = pickLatestStateBlob(blobs);
     if (!blob?.url) return defaultState();
 
     const res = await fetch(blob.url, { cache: "no-store" });
@@ -44,9 +60,9 @@ export async function saveState(state: AppState): Promise<void> {
     articles: pruneArticlesForStorage(state.articles),
   };
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!isBlobConfigured()) {
     throw new Error(
-      "Vercel Blob이 연결되지 않았습니다. Storage → Blob을 프로젝트에 연결하세요."
+      "Vercel Blob이 연결되지 않았습니다. Vercel 대시보드 → Storage → Blob을 프로젝트에 연결하세요."
     );
   }
 
