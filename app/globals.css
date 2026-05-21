@@ -71,43 +71,29 @@ a:hover {
   border: 1px solid rgba(232, 93, 4, 0.35);
 }
 
-.section {
-  margin-bottom: 2rem;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  margin: 0 0 0.75rem;
-}
-
-.section-title .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.section-title .dot.today {
-  background: var(--today);
-}
-
-.section-title .dot.yesterday {
-  background: var(--yesterday);
-}
-
-.list {
+.timeline {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.timeline-rank {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+  padding-top: 1.1rem;
+  opacity: 0.7;
 }
 
 .card {
@@ -122,17 +108,46 @@ a:hover {
   border-color: var(--accent);
 }
 
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.day-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+.day-chip.today {
+  background: rgba(42, 157, 143, 0.2);
+  color: var(--today);
+}
+
+.day-chip.yesterday {
+  background: rgba(69, 123, 157, 0.2);
+  color: var(--yesterday);
+}
+
+.card-time {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
 .card h2 {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.35rem;
   font-size: 1.05rem;
   font-weight: 600;
   line-height: 1.4;
 }
 
-.card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+.card-source {
+  margin: 0;
   font-size: 0.8rem;
   color: var(--muted);
 }

@@ -1,5 +1,6 @@
 import { list, put } from "@vercel/blob";
-import { visibleDayKeys, yesterdayKST } from "./dates";
+import { yesterdayKST } from "./dates";
+import { dedupeArticles, prepareVisibleArticles, sortNewestFirst } from "./articles";
 import type { StoredArticle } from "./news";
 import { trimSentHistory } from "./news";
 
@@ -27,9 +28,10 @@ export async function loadState(): Promise<AppState> {
     const res = await fetch(blob.url, { cache: "no-store" });
     if (!res.ok) return defaultState();
     const data = (await res.json()) as AppState;
+    const articles = Array.isArray(data.articles) ? data.articles : [];
     return {
       sent: data.sent ?? {},
-      articles: Array.isArray(data.articles) ? data.articles : [],
+      articles: normalizeStoredArticles(articles),
     };
   } catch {
     return defaultState();
@@ -56,16 +58,17 @@ export async function saveState(state: AppState): Promise<void> {
   });
 }
 
+function normalizeStoredArticles(articles: StoredArticle[]): StoredArticle[] {
+  return sortNewestFirst(dedupeArticles(articles));
+}
+
 function pruneArticlesForStorage(articles: StoredArticle[]): StoredArticle[] {
   const minDay = yesterdayKST();
-  return articles
-    .filter((a) => a.day >= minDay)
-    .sort((a, b) => b.addedAt.localeCompare(a.addedAt));
+  return sortNewestFirst(
+    dedupeArticles(articles.filter((a) => a.day >= minDay))
+  );
 }
 
 export function getVisibleArticles(articles: StoredArticle[]): StoredArticle[] {
-  const days = visibleDayKeys();
-  return articles
-    .filter((a) => days.has(a.day))
-    .sort((a, b) => b.addedAt.localeCompare(a.addedAt));
+  return prepareVisibleArticles(articles);
 }

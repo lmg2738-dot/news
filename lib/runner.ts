@@ -1,3 +1,4 @@
+import { dedupeArticles } from "./articles";
 import { getConfig } from "./config";
 import {
   collectArticles,
@@ -17,12 +18,12 @@ export type RunResult = {
 export async function runNewsCycle(): Promise<RunResult> {
   const config = getConfig();
   const state = await loadState();
-  const articles = await collectArticles(config.keywords);
+  state.articles = dedupeArticles(state.articles);
 
+  const collected = await collectArticles(config.keywords);
   let newCount = 0;
-  const existingHashes = new Set(state.articles.map((a) => a.hash));
 
-  for (const art of articles) {
+  for (const art of collected) {
     if (newCount >= MAX_NEW_PER_CYCLE) break;
     if (state.sent[art.hash]) continue;
 
@@ -34,10 +35,7 @@ export async function runNewsCycle(): Promise<RunResult> {
     );
 
     state.sent[art.hash] = stored.addedAt;
-    if (!existingHashes.has(art.hash)) {
-      state.articles.unshift(stored);
-      existingHashes.add(art.hash);
-    }
+    state.articles = dedupeArticles([stored, ...state.articles]);
     newCount += 1;
   }
 
@@ -50,7 +48,7 @@ export async function runNewsCycle(): Promise<RunResult> {
     totalVisible: visible.length,
     message:
       newCount > 0
-        ? `새 기사 ${newCount}건 전송·저장`
-        : "새 기사 없음",
+        ? `새 기사 ${newCount}건 전송·저장 (표시 ${visible.length}건)`
+        : `새 기사 없음 (표시 ${visible.length}건)`,
   };
 }
