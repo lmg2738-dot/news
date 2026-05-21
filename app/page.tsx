@@ -46,8 +46,9 @@ export default async function HomePage() {
           <br />
           {!storageReady ? (
             <>
-              Vercel 저장: <code>config.json</code>에 Upstash URL·TOKEN 추가
-              (console.upstash.com 무료) 또는 GitHub Actions → CJ News Batch 실행.
+              Vercel Environment에 Upstash·텔레그램 변수 설정(
+              <code>docs/VERCEL-ENV.md</code>) 또는 GitHub Actions → CJ News Batch
+              실행.
             </>
           ) : storedTotal > 0 ? (
             <>

@@ -2,25 +2,11 @@
  * 텔레그램 API 단건 전송 테스트
  * 사용: npm run test:telegram
  */
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { getConfig } from "../lib/config";
 import {
   sendTelegramDetailed,
   formatTelegramMessage,
 } from "../lib/telegram";
-
-function loadTelegramConfig() {
-  const path = join(process.cwd(), "config.json");
-  if (!existsSync(path)) throw new Error("config.json 없음");
-  const cfg = JSON.parse(readFileSync(path, "utf-8")) as {
-    telegram_bot_token?: string;
-    telegram_chat_id?: string;
-  };
-  const botToken = cfg.telegram_bot_token?.trim();
-  const chatId = cfg.telegram_chat_id?.trim();
-  if (!botToken || !chatId) throw new Error("telegram_bot_token / telegram_chat_id 필요");
-  return { botToken, chatId };
-}
 
 async function getMe(botToken: string) {
   const url = `https://api.telegram.org/bot${botToken}/getMe`;
@@ -55,7 +41,7 @@ async function sendRaw(
 
 async function main() {
   console.log("=== 텔레그램 API 테스트 ===\n");
-  const { botToken, chatId } = loadTelegramConfig();
+  const { telegramBotToken: botToken, telegramChatId: chatId } = getConfig();
   console.log("chat_id:", chatId);
   console.log("bot_token:", botToken.slice(0, 12) + "...\n");
 

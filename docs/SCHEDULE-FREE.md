@@ -19,10 +19,9 @@ Vercel **Cron Jobs는 유료 플랜** 기능입니다. 이 프로젝트는 아�
 3. **Run workflow** 로 수동 1회 실행 → 로그에 `텔레그램 5건` 등 확인
 4. 이후 **10분마다** Run이 자동 생성되는지 확인 (KST로는 :00, :10, :20 … 근처)
 
-### Upstash (선택)
+### Secrets (필수)
 
-`config.json`에 URL·TOKEN이 있으면 **Secrets 없이** 동작합니다.  
-Secrets(`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`)를 넣으면 env가 우선합니다.
+`docs/VERCEL-ENV.md` 참고 — Actions에 Upstash·텔레그램 Secrets 설정 (config.json 미사용).
 
 ### 수동 실행만 알림이 올 때
 

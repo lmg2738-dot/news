@@ -41,7 +41,7 @@ export function getStatePublicUrl(): string {
 export function getActiveStorageBackend(): StorageBackend {
   if (isRedisConfigured()) return "redis";
   if (process.env.GITHUB_ACTIONS === "true") return "local";
-  // Vercel: PAT로 GitHub API/Actions 트리거 불가 → Redis(config.json) 필요
+  // Vercel: PAT로 GitHub API/Actions 트리거 불가 → Upstash 환경 변수 필요
   if (process.env.VERCEL) return "none";
   if (getGitHubToken() && getGitHubRepository()) return "github";
   return "local";
@@ -121,7 +121,7 @@ async function saveToGitHubApi(state: AppState): Promise<void> {
   const repo = getGitHubRepository();
   if (!token) {
     throw new Error(
-      "GitHub 토큰 없음: Vercel 환경 변수 GITHUB_TOKEN 또는 config.json의 github_token"
+      "GitHub 토큰 없음: GITHUB_TOKEN 환경 변수를 설정하세요"
     );
   }
 
@@ -219,8 +219,8 @@ export async function saveState(state: AppState): Promise<SaveMode> {
       return "local";
     default:
       throw new Error(
-        "Vercel 저장소 미설정: config.json에 upstash_redis_rest_url·upstash_redis_rest_token 추가 " +
-          "(https://console.upstash.com 무료 DB 생성) 또는 GitHub Actions에서 'CJ News Batch' 수동 실행"
+        "Vercel 저장소 미설정: UPSTASH_REDIS_REST_URL·UPSTASH_REDIS_REST_TOKEN 환경 변수 설정 " +
+          "(console.upstash.com) 또는 GitHub Actions 'CJ News Batch' 실행"
       );
   }
 }

@@ -37,6 +37,7 @@ export async function GET(request: Request) {
       ok: true,
       schedule: "github-actions-10min",
       scheduleDoc: "/docs/SCHEDULE-FREE.md",
+      envDoc: "/docs/VERCEL-ENV.md",
       storageBackend: getActiveStorageBackend(),
       redisConfigured: isRedisConfigured(),
       storageReady: canPersistState(),

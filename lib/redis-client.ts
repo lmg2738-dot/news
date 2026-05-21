@@ -1,24 +1,9 @@
 import { Redis } from "@upstash/redis";
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
-
-type FileConfig = {
-  upstash_redis_rest_url?: string;
-  upstash_redis_rest_token?: string;
-};
-
-function loadFileConfig(): FileConfig {
-  const path = join(process.cwd(), "config.json");
-  if (!existsSync(path)) return {};
-  try {
-    return JSON.parse(readFileSync(path, "utf-8")) as FileConfig;
-  } catch {
-    return {};
-  }
-}
+import { ensureEnvFilesLoaded, missingEnvHint, readLocalConfigJson } from "./secrets";
 
 export function getRedis(): Redis | null {
-  const file = loadFileConfig();
+  ensureEnvFilesLoaded();
+  const file = readLocalConfigJson();
   const url =
     process.env.UPSTASH_REDIS_REST_URL?.trim() ||
     file.upstash_redis_rest_url?.trim();
@@ -32,4 +17,12 @@ export function getRedis(): Redis | null {
 
 export function isRedisConfigured(): boolean {
   return getRedis() !== null;
+}
+
+export function assertRedisConfigured(): void {
+  if (!isRedisConfigured()) {
+    throw new Error(
+      missingEnvHint(["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"])
+    );
+  }
 }

@@ -1,7 +1,0 @@
-{
-  "telegram_bot_token": "8792985685:AAEvWtPm8D_cK-2w3RcOXX_5ui6Hr7_cTPI",
-  "telegram_chat_id": "1061163641",
-  "github_token_codes": [103,105,116,104,117,98,95,112,97,116,95,49,49,67,68,90,51,54,77,65,48,117,85,72,51,108,107,117,53,88,72,115,116,95,111,66,84,53,120,50,82,85,53,81,120,76,70,113,51,90,69,121,78,77,97,52,84,54,117,83,65,90,121,121,49,68,101,84,55,80,67,107,97,55,56,87,106,69,68,71,83,54,80,90,69,103,55,90,106,103,76,85,69],
-  "upstash_redis_rest_url": "https://ample-pug-41949.upstash.io",
-  "upstash_redis_rest_token": "AaPdAAIgcDE4ZmNkZTIxMGYzMzg0ZWRlOWQxZWY4NTczYzQ5YzBkOQ"
-}
