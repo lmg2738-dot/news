@@ -13,7 +13,10 @@ import {
   loadState,
   saveState,
 } from "./storage";
-import { formatTelegramMessage, sendTelegram } from "./telegram";
+import {
+  formatTelegramMessage,
+  sendTelegramDetailed,
+} from "./telegram";
 
 export type RunResult = {
   ok: boolean;
@@ -57,18 +60,22 @@ export async function runNewsCycle(): Promise<RunResult> {
       state.articles.find((a) => a.hash === art.hash) ??
       toStoredArticle(art);
 
-    try {
-      const ok = await sendTelegram(
-        config.telegramBotToken,
-        config.telegramChatId,
-        formatTelegramMessage(stored)
+    const tg = await sendTelegramDetailed(
+      config.telegramBotToken,
+      config.telegramChatId,
+      formatTelegramMessage(stored)
+    );
+    if (tg.ok) {
+      telegramSent += 1;
+      state.sent[art.hash] = stored.addedAt;
+    } else {
+      console.error(
+        "[telegram]",
+        art.hash,
+        tg.status,
+        tg.errorCode,
+        tg.description
       );
-      if (ok) {
-        telegramSent += 1;
-        state.sent[art.hash] = stored.addedAt;
-      }
-    } catch (e) {
-      console.error("[telegram]", art.hash, e);
     }
     newCount += 1;
   }

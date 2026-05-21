@@ -10,7 +10,8 @@
     "batch": "tsx scripts/batch.ts",
     "batch:once": "tsx scripts/run-once.ts",
     "batch:remote": "tsx scripts/trigger-remote.ts",
-    "diagnose": "tsx scripts/diagnose.ts"
+    "diagnose": "tsx scripts/diagnose.ts",
+    "test:telegram": "tsx scripts/test-telegram.ts"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.3",
