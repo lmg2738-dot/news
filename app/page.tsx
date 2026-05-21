@@ -9,6 +9,7 @@ import {
   getVisibleArticles,
   loadState,
 } from "@/lib/storage";
+import { APP_VERSION } from "@/lib/version";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +103,7 @@ export default async function HomePage() {
       )}
 
       <footer className="footer">
-        갱신:{" "}
+        v{APP_VERSION} · 갱신:{" "}
         {new Intl.DateTimeFormat("ko-KR", {
           timeZone: "Asia/Seoul",
           dateStyle: "medium",

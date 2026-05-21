@@ -1,6 +1,7 @@
 {
   "name": "cj-news-alert",
   "version": "1.0.0",
+  "description": "CJ 뉴스 알림 — Vercel, Upstash Redis, 텔레그램, 웹 피드",
   "private": true,
   "scripts": {
     "dev": "next dev",
