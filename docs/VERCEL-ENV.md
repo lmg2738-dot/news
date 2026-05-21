@@ -1,9 +1,6 @@
 # Vercel / GitHub 환경 변수 설정
 
-`config.json`에 비밀번호·토큰을 넣지 마세요. **Git에 올라가면 유출**됩니다.  
-Vercel과 GitHub Actions에는 아래 **Environment Variables / Secrets** 만 사용합니다.
-
-로컬 개발은 `.env.local` (또는 gitignore된 `config.json`)을 씁니다.
+Vercel과 GitHub Actions, 로컬 모두 **Environment Variables / `.env.local`** 만 사용합니다.
 
 ---
 
@@ -23,7 +20,7 @@ Production · Preview · Development 모두에 동일하게 넣는 것을 권장
 
 ### Vercel에 넣을 때 체크리스트
 
-1. 기존 `config.json`에 있던 값을 **복사해 위 변수에 붙여넣기**
+1. 텔레그램·Upstash 값을 위 변수에 붙여넣기
 2. 저장 후 **Deployments → Redeploy** (환경 변수는 재배포 후 반영)
 3. `https://<도메인>/api/test-telegram` 으로 텔레그램 테스트
 4. `https://<도메인>/api/status` 에서 `redisConfigured: true` 확인
@@ -39,7 +36,7 @@ Production · Preview · Development 모두에 동일하게 넣는 것을 권장
 | `UPSTASH_REDIS_REST_URL` | ✅ | Vercel과 **동일**한 Upstash URL |
 | `UPSTASH_REDIS_REST_TOKEN` | ✅ | Vercel과 **동일**한 토큰 |
 
-텔레그램은 워크플로가 `config.json`을 읽지 않으므로, Actions에서도 텔레그램을 쓰려면 아래 Secrets를 추가합니다.
+Actions에서도 텔레그램을 쓰려면 아래 Secrets를 추가합니다.
 
 | Secret 이름 | 필수 | 설명 |
 |-------------|------|------|
@@ -47,7 +44,7 @@ Production · Preview · Development 모두에 동일하게 넣는 것을 권장
 | `TELEGRAM_CHAT_ID` | ✅ | Vercel과 동일 |
 
 > 워크플로 `news-batch.yml`은 checkout 후 `npm run batch:once`를 실행합니다.  
-> 저장소에 `config.json`이 없으면 **반드시** 위 Secrets가 있어야 합니다.
+> 위 Secrets가 없으면 배치가 실패합니다.
 
 ---
 
@@ -59,22 +56,6 @@ copy .env.example .env.local
 npm run dev
 npm run batch:once
 ```
-
-`config.json`은 **로컬에서만** 선택적으로 사용 가능합니다 (Vercel·Actions 빌드에서는 무시).
-
----
-
-## Git에서 제거할 것
-
-이미 커밋된 `config.json`이 있다면:
-
-```bash
-git rm --cached config.json
-git commit -m "chore: config.json Git 추적 제거"
-git push
-```
-
-이후 Upstash·텔레그램 토큰은 **Vercel/GitHub에서 로테이션(재발급)** 하는 것을 권장합니다.
 
 ---
 

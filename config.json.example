@@ -1,3 +1,0 @@
-{
-  "_comment": "로컬 전용(선택). Git에 config.json 커밋 금지. Vercel/GitHub Actions는 Environment Variables 사용 — docs/VERCEL-ENV.md 참고"
-}

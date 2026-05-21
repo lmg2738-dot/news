@@ -1,15 +1,10 @@
 import { Redis } from "@upstash/redis";
-import { ensureEnvFilesLoaded, missingEnvHint, readLocalConfigJson } from "./secrets";
+import { ensureEnvFilesLoaded, missingEnvHint } from "./secrets";
 
 export function getRedis(): Redis | null {
   ensureEnvFilesLoaded();
-  const file = readLocalConfigJson();
-  const url =
-    process.env.UPSTASH_REDIS_REST_URL?.trim() ||
-    file.upstash_redis_rest_url?.trim();
-  const token =
-    process.env.UPSTASH_REDIS_REST_TOKEN?.trim() ||
-    file.upstash_redis_rest_token?.trim();
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
   if (!url || !token) return null;
   return new Redis({ url, token });
