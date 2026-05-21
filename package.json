@@ -6,10 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "batch": "tsx scripts/batch.ts",
+    "batch:once": "tsx scripts/run-once.ts",
+    "batch:remote": "tsx scripts/trigger-remote.ts"
   },
   "dependencies": {
     "@vercel/blob": "^0.27.3",
+    "node-cron": "^3.0.3",
     "cheerio": "^1.0.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
@@ -19,7 +23,9 @@
     "rss-parser": "^3.13.0"
   },
   "devDependencies": {
+    "@types/node-cron": "^3.0.11",
     "@types/node": "^20.17.30",
+    "tsx": "^4.19.3",
     "@types/react": "^18.3.20",
     "@types/react-dom": "^18.3.6",
     "typescript": "^5.8.3"

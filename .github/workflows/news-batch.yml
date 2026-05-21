@@ -1,0 +1,28 @@
+# Vercel Cron 대신 10분마다 배포 URL의 /api/cron 호출
+name: CJ News Batch (10min)
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger news cycle on Vercel
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ]; then
+            echo "::error::GitHub Secrets에 APP_URL을 설정하세요 (예: https://xxx.vercel.app)"
+            exit 1
+          fi
+          AUTH_HEADER=""
+          if [ -n "$CRON_SECRET" ]; then
+            AUTH_HEADER="Authorization: Bearer ${CRON_SECRET}"
+          fi
+          curl -fsS -X GET "${APP_URL%/}/api/cron" \
+            -H "Accept: application/json" \
+            ${AUTH_HEADER:+-H "$AUTH_HEADER"}
