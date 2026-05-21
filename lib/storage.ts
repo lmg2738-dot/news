@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import { yesterdayKST } from "./dates";
+import { minStorageDayKST } from "./dates";
 import { getRedis, isRedisConfigured } from "./redis-client";
 import { dedupeArticles, prepareVisibleArticles, sortNewestFirst } from "./articles";
 import { getGitHubRepository, getGitHubToken } from "./github-token";
@@ -193,9 +193,10 @@ async function saveViaGitHubWithWorkflowFallback(
 export type SaveMode = "redis" | "local" | "api" | "workflow";
 
 export async function saveState(state: AppState): Promise<SaveMode> {
+  const minDay = minStorageDayKST();
   const pruned: AppState = {
-    sent: trimSentHistory(state.sent),
-    articles: pruneArticlesForStorage(state.articles),
+    sent: trimSentHistory(pruneSentForStorage(state.sent, minDay)),
+    articles: pruneArticlesForStorage(state.articles, minDay),
   };
 
   const backend = getActiveStorageBackend();
@@ -228,11 +229,26 @@ function normalizeStoredArticles(articles: StoredArticle[]): StoredArticle[] {
   return sortNewestFirst(dedupeArticles(articles));
 }
 
-function pruneArticlesForStorage(articles: StoredArticle[]): StoredArticle[] {
-  const minDay = yesterdayKST();
+function pruneArticlesForStorage(
+  articles: StoredArticle[],
+  minDay: string
+): StoredArticle[] {
   return sortNewestFirst(
     dedupeArticles(articles.filter((a) => a.day >= minDay))
   );
+}
+
+/** 3일 이전 sent 기록 제거 (Redis 용량·중복 알림 정리) */
+function pruneSentForStorage(
+  sent: Record<string, string>,
+  minDay: string
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [hash, addedAt] of Object.entries(sent)) {
+    const day = addedAt.slice(0, 10);
+    if (day >= minDay) out[hash] = addedAt;
+  }
+  return out;
 }
 
 export function getVisibleArticles(articles: StoredArticle[]): StoredArticle[] {
