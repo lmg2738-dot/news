@@ -19,7 +19,7 @@ Production · Preview · Development 모두에 동일하게 넣는 것을 권장
 | `UPSTASH_REDIS_REST_URL` | ✅ | Redis REST URL | [Upstash Console](https://console.upstash.com) → DB → REST |
 | `UPSTASH_REDIS_REST_TOKEN` | ✅ | Redis REST 토큰 | 동일 |
 | `CRON_SECRET` | 권장 | `/api/cron` 호출 비밀번호 | 임의 긴 문자열 (32자 이상) |
-| `NEWS_KEYWORDS` | 선택 | 검색 키워드 | 기본 `CJ` (쉼표로 여러 개) |
+| `NEWS_KEYWORDS` | 선택 | 검색 키워드(OR) | 기본 `CJ`. **쉼표로 구분** — 키워드마다 Google·네이버를 각각 검색 후 합침 |
 
 ### Vercel에 넣을 때 체크리스트
 
@@ -86,7 +86,18 @@ TELEGRAM_CHAT_ID=1061163641
 UPSTASH_REDIS_REST_URL=https://xxxx-xxxx.upstash.io
 UPSTASH_REDIS_REST_TOKEN=AXxxxxxxxxxxxxxxxxxxxxxxxx
 CRON_SECRET=your-random-long-secret-here
-NEWS_KEYWORDS=CJ
+NEWS_KEYWORDS=CJ,롯데
 ```
+
+### 다중 키워드 (OR 검색)
+
+`CJ,롯데` 처럼 **쉼표(,)** 로 나눕니다. 띄어쓰기는 자동 제거됩니다.
+
+- `CJ` 로 검색한 기사 **+** `롯데` 로 검색한 기사를 **합칩니다**
+- **「CJ 롯데」가 한 제목에 같이 있는 기사만** 찾는 방식이 **아닙니다**
+- 같은 기사(제목·URL 동일)는 hash로 **한 번만** 저장됩니다
+
+예: Vercel / GitHub Actions 모두  
+`NEWS_KEYWORDS=CJ,롯데,삼성`
 
 `GITHUB_TOKEN`은 Vercel에서 Redis만 쓸 때 **불필요**합니다.
