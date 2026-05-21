@@ -4,8 +4,9 @@ import { collectArticles } from "@/lib/news";
 import { getConfig } from "@/lib/config";
 import { runNewsCycle } from "@/lib/runner";
 import {
+  canPersistState,
+  getStatePublicUrl,
   getVisibleArticles,
-  isBlobConfigured,
   loadState,
 } from "@/lib/storage";
 
@@ -28,7 +29,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      blobConfigured: isBlobConfigured(),
+      storage: "github-json",
+      storageReady: canPersistState(),
+      stateUrl: getStatePublicUrl(),
       today: todayKST(),
       yesterday: yesterdayKST(),
       collectedNow: collected.length,

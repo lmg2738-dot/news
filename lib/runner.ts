@@ -5,7 +5,13 @@ import {
   MAX_NEW_PER_CYCLE,
   toStoredArticle,
 } from "./news";
-import { getVisibleArticles, loadState, saveState } from "./storage";
+import {
+  canPersistState,
+  getStatePublicUrl,
+  getVisibleArticles,
+  loadState,
+  saveState,
+} from "./storage";
 import { formatTelegramMessage, sendTelegram } from "./telegram";
 
 export type RunResult = {
@@ -15,13 +21,14 @@ export type RunResult = {
   collectedCount: number;
   totalVisible: number;
   telegramSent: number;
-  blobConfigured: boolean;
+  storageReady: boolean;
+  stateUrl: string;
   message: string;
   error?: string;
 };
 
 export async function runNewsCycle(): Promise<RunResult> {
-  const blobConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  const storageReady = canPersistState();
   const config = getConfig();
   const state = await loadState();
   state.articles = dedupeArticles(state.articles);
@@ -31,7 +38,6 @@ export async function runNewsCycle(): Promise<RunResult> {
   let newCount = 0;
   let telegramSent = 0;
 
-  // 1) 수집된 기사는 텔레그램 전송 여부와 관계없이 웹 피드에 반영
   for (const art of collected) {
     const stored = toStoredArticle(art);
     const before = state.articles.length;
@@ -39,7 +45,6 @@ export async function runNewsCycle(): Promise<RunResult> {
     if (state.articles.length >= before) syncedCount += 1;
   }
 
-  // 2) 아직 보내지 않은 기사만 텔레그램 전송 (회당 최대 5건)
   for (const art of collected) {
     if (state.sent[art.hash]) continue;
     if (newCount >= MAX_NEW_PER_CYCLE) break;
@@ -76,7 +81,8 @@ export async function runNewsCycle(): Promise<RunResult> {
       collectedCount: collected.length,
       totalVisible: visible.length,
       telegramSent,
-      blobConfigured,
+      storageReady,
+      stateUrl: getStatePublicUrl(),
       message: msg,
       error: msg,
     };
@@ -91,7 +97,8 @@ export async function runNewsCycle(): Promise<RunResult> {
     collectedCount: collected.length,
     totalVisible: visible.length,
     telegramSent,
-    blobConfigured,
+    storageReady,
+    stateUrl: getStatePublicUrl(),
     message:
       collected.length === 0
         ? "수집된 뉴스 없음"

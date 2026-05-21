@@ -14,7 +14,9 @@ out/
 .venv/
 __pycache__/
 *.pyc
-data/
+data/*.log
+data/sent_articles.json
+!data/news-state.json
 
 # misc
 .DS_Store

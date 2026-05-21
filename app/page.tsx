@@ -4,15 +4,17 @@ import {
   yesterdayKST,
 } from "@/lib/dates";
 import {
+  canPersistState,
+  getStatePublicUrl,
   getVisibleArticles,
-  isBlobConfigured,
   loadState,
 } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const blobOk = isBlobConfigured();
+  const storageReady = canPersistState();
+  const stateUrl = getStatePublicUrl();
   const state = await loadState();
   const articles = getVisibleArticles(state.articles);
   const storedTotal = state.articles.length;
@@ -41,10 +43,13 @@ export default async function HomePage() {
         <p className="empty">
           표시할 뉴스가 없습니다 ({today} · {yesterday} 기준).
           <br />
-          {!blobOk ? (
+          {!storageReady ? (
             <>
-              Vercel Storage → <strong>Blob</strong> 연결이 필요합니다. 연결 후{" "}
-              <code>/api/cron</code> 또는 GitHub Actions 배치가 돌아야 저장됩니다.
+              저장: GitHub Actions(10분) 또는 Vercel에{" "}
+              <code>GITHUB_TOKEN</code> 설정. 데이터:{" "}
+              <a href={stateUrl} target="_blank" rel="noopener noreferrer">
+                news-state.json
+              </a>
             </>
           ) : storedTotal > 0 ? (
             <>

@@ -1,4 +1,4 @@
-# Vercel Cron 대신 10분마다 배포 URL의 /api/cron 호출
+# 10분마다 수집·텔레그램·data/news-state.json 저장 후 커밋 (Blob 불필요)
 name: CJ News Batch (10min)
 
 on:
@@ -6,23 +6,33 @@ on:
     - cron: "*/10 * * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  trigger:
+  batch:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger news cycle on Vercel
-        env:
-          APP_URL: ${{ secrets.APP_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run news batch
+        run: npm run batch:once
+
+      - name: Commit news state
         run: |
-          if [ -z "$APP_URL" ]; then
-            echo "::error::GitHub Secrets에 APP_URL을 설정하세요 (예: https://xxx.vercel.app)"
-            exit 1
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/news-state.json
+          if git diff --staged --quiet; then
+            echo "No changes to news-state.json"
+          else
+            git commit -m "chore: update news state [skip ci]"
+            git push
           fi
-          AUTH_HEADER=""
-          if [ -n "$CRON_SECRET" ]; then
-            AUTH_HEADER="Authorization: Bearer ${CRON_SECRET}"
-          fi
-          curl -fsS -X GET "${APP_URL%/}/api/cron" \
-            -H "Accept: application/json" \
-            ${AUTH_HEADER:+-H "$AUTH_HEADER"}
