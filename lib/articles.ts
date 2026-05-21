@@ -10,7 +10,7 @@ export function dedupeArticles(articles: StoredArticle[]): StoredArticle[] {
       byHash.set(art.hash, art);
     }
   }
-  return [...byHash.values()];
+  return Array.from(byHash.values());
 }
 
 /** 최신순(위→아래) 정렬 */
