@@ -3,6 +3,7 @@ import { todayKST, yesterdayKST } from "@/lib/dates";
 import { collectArticles } from "@/lib/news";
 import { getConfig } from "@/lib/config";
 import { runNewsCycle } from "@/lib/runner";
+import { isRedisConfigured } from "@/lib/redis-client";
 import {
   canPersistState,
   getActiveStorageBackend,
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       ok: true,
       storageBackend: getActiveStorageBackend(),
+      redisConfigured: isRedisConfigured(),
       storageReady: canPersistState(),
       stateUrl: getStatePublicUrl(),
       today: todayKST(),

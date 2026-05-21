@@ -45,12 +45,8 @@ export default async function HomePage() {
           <br />
           {!storageReady ? (
             <>
-              Vercel 저장: Upstash Redis 연동 또는{" "}
-              <code>config.json</code>에 <code>github_token</code> 추가.
-              데이터:{" "}
-              <a href={stateUrl} target="_blank" rel="noopener noreferrer">
-                news-state.json
-              </a>
+              Vercel 저장: <code>config.json</code>에 Upstash URL·TOKEN 추가
+              (console.upstash.com 무료) 또는 GitHub Actions → CJ News Batch 실행.
             </>
           ) : storedTotal > 0 ? (
             <>

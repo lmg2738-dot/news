@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import { Redis } from "@upstash/redis";
 import { yesterdayKST } from "./dates";
+import { getRedis, isRedisConfigured } from "./redis-client";
 import { dedupeArticles, prepareVisibleArticles, sortNewestFirst } from "./articles";
 import { getGitHubRepository, getGitHubToken } from "./github-token";
 import {
@@ -26,16 +26,6 @@ function defaultState(): AppState {
   return { sent: {}, articles: [] };
 }
 
-function getRedis(): Redis | null {
-  if (
-    process.env.UPSTASH_REDIS_REST_URL &&
-    process.env.UPSTASH_REDIS_REST_TOKEN
-  ) {
-    return Redis.fromEnv();
-  }
-  return null;
-}
-
 function localStatePath(): string {
   return join(process.cwd(), STATE_FILE);
 }
@@ -49,12 +39,12 @@ export function getStatePublicUrl(): string {
 }
 
 export function getActiveStorageBackend(): StorageBackend {
-  if (getRedis()) return "redis";
-  // Actions: 파일 저장 후 git push (내장 GITHUB_TOKEN, PAT Contents 불필요)
+  if (isRedisConfigured()) return "redis";
   if (process.env.GITHUB_ACTIONS === "true") return "local";
+  // Vercel: PAT로 GitHub API/Actions 트리거 불가 → Redis(config.json) 필요
+  if (process.env.VERCEL) return "none";
   if (getGitHubToken() && getGitHubRepository()) return "github";
-  if (!process.env.VERCEL) return "local";
-  return "none";
+  return "local";
 }
 
 export function canPersistState(): boolean {
@@ -228,7 +218,8 @@ export async function saveState(state: AppState): Promise<SaveMode> {
       return "local";
     default:
       throw new Error(
-        "저장 설정 필요 (택1): ① Vercel→Upstash Redis ② GitHub PAT(Contents·Actions 쓰기) ③ GitHub Actions 배치"
+        "Vercel 저장소 미설정: config.json에 upstash_redis_rest_url·upstash_redis_rest_token 추가 " +
+          "(https://console.upstash.com 무료 DB 생성) 또는 GitHub Actions에서 'CJ News Batch' 수동 실행"
       );
   }
 }
