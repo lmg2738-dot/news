@@ -1,10 +1,12 @@
-# 10분마다 수집·저장 (Upstash Redis 또는 GitHub API / 로컬 JSON)
+# 10분마다 수집·저장 → data/news-state.json 커밋
 name: CJ News Batch (10min)
 
 on:
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
+  repository_dispatch:
+    types: [run-news-batch]
 
 permissions:
   contents: write
@@ -27,3 +29,15 @@ jobs:
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: npm run batch:once
+
+      - name: Commit and push news-state.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/news-state.json
+          if git diff --staged --quiet; then
+            echo "No changes in news-state.json"
+          else
+            git commit -m "chore: update news state [skip ci]"
+            git push
+          fi

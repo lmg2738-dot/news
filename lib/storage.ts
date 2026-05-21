@@ -50,10 +50,10 @@ export function getStatePublicUrl(): string {
 
 export function getActiveStorageBackend(): StorageBackend {
   if (getRedis()) return "redis";
+  // Actions: 파일 저장 후 git push (내장 GITHUB_TOKEN, PAT Contents 불필요)
+  if (process.env.GITHUB_ACTIONS === "true") return "local";
   if (getGitHubToken() && getGitHubRepository()) return "github";
-  if (process.env.GITHUB_ACTIONS === "true" || !process.env.VERCEL) {
-    return "local";
-  }
+  if (!process.env.VERCEL) return "local";
   return "none";
 }
 
@@ -177,14 +177,24 @@ async function saveToGitHubApi(state: AppState): Promise<void> {
 async function saveViaGitHubWithWorkflowFallback(
   state: AppState
 ): Promise<"api" | "workflow"> {
+  // Vercel: Contents API 대신 Actions 배치만 트리거 (PAT Contents 쓰기 불필요)
+  if (process.env.VERCEL) {
+    const trigger = await triggerNewsBatchWorkflow();
+    if (trigger.ok) return "workflow";
+    throw new Error(
+      `GitHub Actions 트리거 실패: ${trigger.detail}. ` +
+        "PAT에 Actions Read and write를 추가하거나, Actions 탭에서 'CJ News Batch'를 Run workflow 하세요."
+    );
+  }
+
   try {
     await saveToGitHubApi(state);
     return "api";
   } catch (e) {
     const status = (e as Error & { status?: number }).status;
-    if (status === 403 && process.env.VERCEL) {
-      const triggered = await triggerNewsBatchWorkflow();
-      if (triggered) return "workflow";
+    if (status === 403) {
+      const trigger = await triggerNewsBatchWorkflow();
+      if (trigger.ok) return "workflow";
     }
     throw e;
   }

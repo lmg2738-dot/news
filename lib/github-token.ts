@@ -38,6 +38,10 @@ function tokenFromFile(file: FileConfig): string | undefined {
 }
 
 export function getGitHubToken(): string | undefined {
+  // GitHub Actions: 내장 토큰만 사용 (config PAT는 Contents 권한 없을 수 있음)
+  if (process.env.GITHUB_ACTIONS === "true") {
+    return process.env.GITHUB_TOKEN?.trim();
+  }
   return (
     process.env.GITHUB_TOKEN?.trim() ||
     tokenFromFile(loadFileConfig()) ||
