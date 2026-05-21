@@ -4,6 +4,10 @@ import { Redis } from "@upstash/redis";
 import { yesterdayKST } from "./dates";
 import { dedupeArticles, prepareVisibleArticles, sortNewestFirst } from "./articles";
 import { getGitHubRepository, getGitHubToken } from "./github-token";
+import {
+  patPermissionHint,
+  triggerNewsBatchWorkflow,
+} from "./github-workflow";
 import type { StoredArticle } from "./news";
 import { trimSentHistory } from "./news";
 
@@ -162,11 +166,33 @@ async function saveToGitHubApi(state: AppState): Promise<void> {
 
   if (!putRes.ok) {
     const err = await putRes.text();
-    throw new Error(`GitHub 저장 실패 (${putRes.status}): ${err.slice(0, 300)}`);
+    const error = new Error(
+      `GitHub 저장 실패 (${putRes.status}): ${err.slice(0, 300)}${patPermissionHint(putRes.status)}`
+    );
+    (error as Error & { status?: number }).status = putRes.status;
+    throw error;
   }
 }
 
-export async function saveState(state: AppState): Promise<void> {
+async function saveViaGitHubWithWorkflowFallback(
+  state: AppState
+): Promise<"api" | "workflow"> {
+  try {
+    await saveToGitHubApi(state);
+    return "api";
+  } catch (e) {
+    const status = (e as Error & { status?: number }).status;
+    if (status === 403 && process.env.VERCEL) {
+      const triggered = await triggerNewsBatchWorkflow();
+      if (triggered) return "workflow";
+    }
+    throw e;
+  }
+}
+
+export type SaveMode = "redis" | "local" | "api" | "workflow";
+
+export async function saveState(state: AppState): Promise<SaveMode> {
   const pruned: AppState = {
     sent: trimSentHistory(state.sent),
     articles: pruneArticlesForStorage(state.articles),
@@ -177,16 +203,22 @@ export async function saveState(state: AppState): Promise<void> {
   switch (backend) {
     case "redis":
       await saveToRedis(pruned);
-      return;
-    case "github":
-      await saveToGitHubApi(pruned);
-      return;
+      return "redis";
+    case "github": {
+      const mode = await saveViaGitHubWithWorkflowFallback(pruned);
+      if (mode === "workflow") {
+        console.info(
+          "[storage] Contents API 403 → GitHub Actions 배치 트리거됨"
+        );
+      }
+      return mode;
+    }
     case "local":
       writeLocalState(pruned);
-      return;
+      return "local";
     default:
       throw new Error(
-        "저장 설정 필요 (택1): ① Vercel→Upstash Redis 연동 ② GITHUB_TOKEN 또는 config.json github_token ③ GitHub Actions 배치만 사용"
+        "저장 설정 필요 (택1): ① Vercel→Upstash Redis ② GitHub PAT(Contents·Actions 쓰기) ③ GitHub Actions 배치"
       );
   }
 }

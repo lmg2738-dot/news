@@ -25,6 +25,7 @@ export type RunResult = {
   storageReady: boolean;
   storageBackend: string;
   stateUrl: string;
+  saveMode?: string;
   message: string;
   error?: string;
 };
@@ -72,8 +73,9 @@ export async function runNewsCycle(): Promise<RunResult> {
     newCount += 1;
   }
 
+  let saveMode: string | undefined;
   try {
-    await saveState(state);
+    saveMode = await saveState(state);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "저장 실패";
     const visible = getVisibleArticles(state.articles);
@@ -93,6 +95,10 @@ export async function runNewsCycle(): Promise<RunResult> {
   }
 
   const visible = getVisibleArticles(state.articles);
+  const workflowNote =
+    saveMode === "workflow"
+      ? " (GitHub Actions 배치 트리거 — 1~3분 후 페이지 갱신)"
+      : "";
 
   return {
     ok: true,
@@ -104,11 +110,14 @@ export async function runNewsCycle(): Promise<RunResult> {
     storageReady,
     storageBackend,
     stateUrl: getStatePublicUrl(),
+    saveMode,
     message:
       collected.length === 0
         ? "수집된 뉴스 없음"
-        : newCount > 0
-          ? `수집 ${collected.length}건 · 웹 반영 ${syncedCount}건 · 텔레그램 ${telegramSent}건 · 표시 ${visible.length}건`
-          : `수집 ${collected.length}건 · 웹 반영 ${syncedCount}건 (이미 전송된 기사) · 표시 ${visible.length}건`,
+        : saveMode === "workflow"
+          ? `수집 ${collected.length}건 · 저장은 Actions 배치에서 진행${workflowNote}`
+          : newCount > 0
+            ? `수집 ${collected.length}건 · 웹 반영 ${syncedCount}건 · 텔레그램 ${telegramSent}건 · 표시 ${visible.length}건`
+            : `수집 ${collected.length}건 · 웹 반영 ${syncedCount}건 · 표시 ${visible.length}건`,
   };
 }
