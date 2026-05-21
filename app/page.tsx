@@ -45,8 +45,9 @@ export default async function HomePage() {
           <br />
           {!storageReady ? (
             <>
-              저장: GitHub Actions(10분) 또는 Vercel에{" "}
-              <code>GITHUB_TOKEN</code> 설정. 데이터:{" "}
+              Vercel 저장: Upstash Redis 연동 또는{" "}
+              <code>config.json</code>에 <code>github_token</code> 추가.
+              데이터:{" "}
               <a href={stateUrl} target="_blank" rel="noopener noreferrer">
                 news-state.json
               </a>

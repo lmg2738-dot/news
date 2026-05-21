@@ -13,6 +13,7 @@
     "diagnose": "tsx scripts/diagnose.ts"
   },
   "dependencies": {
+    "@upstash/redis": "^1.34.3",
     "node-cron": "^3.0.3",
     "cheerio": "^1.0.0",
     "date-fns": "^4.1.0",

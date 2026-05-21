@@ -5,6 +5,7 @@ import { getConfig } from "@/lib/config";
 import { runNewsCycle } from "@/lib/runner";
 import {
   canPersistState,
+  getActiveStorageBackend,
   getStatePublicUrl,
   getVisibleArticles,
   loadState,
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      storage: "github-json",
+      storageBackend: getActiveStorageBackend(),
       storageReady: canPersistState(),
       stateUrl: getStatePublicUrl(),
       today: todayKST(),

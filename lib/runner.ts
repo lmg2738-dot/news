@@ -7,6 +7,7 @@ import {
 } from "./news";
 import {
   canPersistState,
+  getActiveStorageBackend,
   getStatePublicUrl,
   getVisibleArticles,
   loadState,
@@ -22,6 +23,7 @@ export type RunResult = {
   totalVisible: number;
   telegramSent: number;
   storageReady: boolean;
+  storageBackend: string;
   stateUrl: string;
   message: string;
   error?: string;
@@ -29,6 +31,7 @@ export type RunResult = {
 
 export async function runNewsCycle(): Promise<RunResult> {
   const storageReady = canPersistState();
+  const storageBackend = getActiveStorageBackend();
   const config = getConfig();
   const state = await loadState();
   state.articles = dedupeArticles(state.articles);
@@ -82,6 +85,7 @@ export async function runNewsCycle(): Promise<RunResult> {
       totalVisible: visible.length,
       telegramSent,
       storageReady,
+      storageBackend,
       stateUrl: getStatePublicUrl(),
       message: msg,
       error: msg,
@@ -98,6 +102,7 @@ export async function runNewsCycle(): Promise<RunResult> {
     totalVisible: visible.length,
     telegramSent,
     storageReady,
+    storageBackend,
     stateUrl: getStatePublicUrl(),
     message:
       collected.length === 0

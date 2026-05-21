@@ -1,4 +1,4 @@
-# 10분마다 수집·텔레그램·data/news-state.json 저장 후 커밋 (Blob 불필요)
+# 10분마다 수집·저장 (Upstash Redis 또는 GitHub API / 로컬 JSON)
 name: CJ News Batch (10min)
 
 on:
@@ -23,16 +23,7 @@ jobs:
       - run: npm ci
 
       - name: Run news batch
+        env:
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: npm run batch:once
-
-      - name: Commit news state
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/news-state.json
-          if git diff --staged --quiet; then
-            echo "No changes to news-state.json"
-          else
-            git commit -m "chore: update news state [skip ci]"
-            git push
-          fi

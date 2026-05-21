@@ -1,44 +1,63 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+import { Redis } from "@upstash/redis";
 import { yesterdayKST } from "./dates";
 import { dedupeArticles, prepareVisibleArticles, sortNewestFirst } from "./articles";
+import { getGitHubRepository, getGitHubToken } from "./github-token";
 import type { StoredArticle } from "./news";
 import { trimSentHistory } from "./news";
 
 export const STATE_FILE = "data/news-state.json";
 const STATE_BRANCH = process.env.STATE_BRANCH ?? "main";
+const REDIS_KEY = "cj-news:state";
 
 export type AppState = {
   sent: Record<string, string>;
   articles: StoredArticle[];
 };
 
+export type StorageBackend = "redis" | "github" | "local" | "none";
+
 function defaultState(): AppState {
   return { sent: {}, articles: [] };
+}
+
+function getRedis(): Redis | null {
+  if (
+    process.env.UPSTASH_REDIS_REST_URL &&
+    process.env.UPSTASH_REDIS_REST_TOKEN
+  ) {
+    return Redis.fromEnv();
+  }
+  return null;
 }
 
 function localStatePath(): string {
   return join(process.cwd(), STATE_FILE);
 }
 
-/** GitHub raw URL — Vercel·웹에서 읽기 */
 export function getStatePublicUrl(): string {
   if (process.env.STATE_JSON_URL?.trim()) {
     return process.env.STATE_JSON_URL.trim();
   }
-  const repo = process.env.GITHUB_REPOSITORY ?? "lmg2738-dot/news";
+  const repo = getGitHubRepository();
   return `https://raw.githubusercontent.com/${repo}/${STATE_BRANCH}/${STATE_FILE}`;
 }
 
-export function canPersistState(): boolean {
-  return Boolean(
-    process.env.GITHUB_ACTIONS === "true" ||
-    (process.env.GITHUB_TOKEN && process.env.GITHUB_REPOSITORY) ||
-    !process.env.VERCEL
-  );
+export function getActiveStorageBackend(): StorageBackend {
+  if (getRedis()) return "redis";
+  if (getGitHubToken() && getGitHubRepository()) return "github";
+  if (process.env.GITHUB_ACTIONS === "true" || !process.env.VERCEL) {
+    return "local";
+  }
+  return "none";
 }
 
-/** @deprecated Blob 미사용 — canPersistState 사용 */
+export function canPersistState(): boolean {
+  return getActiveStorageBackend() !== "none";
+}
+
+/** @deprecated */
 export function isBlobConfigured(): boolean {
   return canPersistState();
 }
@@ -61,7 +80,18 @@ function readLocalState(): AppState | null {
   }
 }
 
-async function loadStateFromGitHub(): Promise<AppState> {
+async function loadFromRedis(): Promise<AppState | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  try {
+    const data = await redis.get<AppState>(REDIS_KEY);
+    return data ? parseState(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadFromGitHubRaw(): Promise<AppState> {
   const url = `${getStatePublicUrl()}?t=${Date.now()}`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return defaultState();
@@ -69,11 +99,15 @@ async function loadStateFromGitHub(): Promise<AppState> {
 }
 
 export async function loadState(): Promise<AppState> {
+  const fromRedis = await loadFromRedis();
+  if (fromRedis) return fromRedis;
+
   if (!process.env.VERCEL) {
     const local = readLocalState();
     if (local) return local;
   }
-  return loadStateFromGitHub();
+
+  return loadFromGitHubRaw();
 }
 
 function writeLocalState(state: AppState): void {
@@ -82,12 +116,18 @@ function writeLocalState(state: AppState): void {
   writeFileSync(path, JSON.stringify(state, null, 2), "utf-8");
 }
 
-async function saveStateViaGitHubApi(state: AppState): Promise<void> {
-  const token = process.env.GITHUB_TOKEN?.trim();
-  const repo = process.env.GITHUB_REPOSITORY?.trim();
-  if (!token || !repo) {
+async function saveToRedis(state: AppState): Promise<void> {
+  const redis = getRedis();
+  if (!redis) throw new Error("Redis not configured");
+  await redis.set(REDIS_KEY, state);
+}
+
+async function saveToGitHubApi(state: AppState): Promise<void> {
+  const token = getGitHubToken();
+  const repo = getGitHubRepository();
+  if (!token) {
     throw new Error(
-      "GITHUB_TOKEN과 GITHUB_REPOSITORY가 필요합니다. (Vercel 환경 변수 또는 GitHub Actions)"
+      "GitHub 토큰 없음: Vercel 환경 변수 GITHUB_TOKEN 또는 config.json의 github_token"
     );
   }
 
@@ -122,7 +162,7 @@ async function saveStateViaGitHubApi(state: AppState): Promise<void> {
 
   if (!putRes.ok) {
     const err = await putRes.text();
-    throw new Error(`GitHub 저장 실패 (${putRes.status}): ${err.slice(0, 200)}`);
+    throw new Error(`GitHub 저장 실패 (${putRes.status}): ${err.slice(0, 300)}`);
   }
 }
 
@@ -132,19 +172,23 @@ export async function saveState(state: AppState): Promise<void> {
     articles: pruneArticlesForStorage(state.articles),
   };
 
-  if (process.env.GITHUB_ACTIONS === "true" || !process.env.VERCEL) {
-    writeLocalState(pruned);
-    return;
-  }
+  const backend = getActiveStorageBackend();
 
-  if (process.env.GITHUB_TOKEN && process.env.GITHUB_REPOSITORY) {
-    await saveStateViaGitHubApi(pruned);
-    return;
+  switch (backend) {
+    case "redis":
+      await saveToRedis(pruned);
+      return;
+    case "github":
+      await saveToGitHubApi(pruned);
+      return;
+    case "local":
+      writeLocalState(pruned);
+      return;
+    default:
+      throw new Error(
+        "저장 설정 필요 (택1): ① Vercel→Upstash Redis 연동 ② GITHUB_TOKEN 또는 config.json github_token ③ GitHub Actions 배치만 사용"
+      );
   }
-
-  throw new Error(
-    "저장 불가: GitHub Actions 배치를 사용하거나, Vercel에 GITHUB_TOKEN( repo 권한 )을 설정하세요."
-  );
 }
 
 function normalizeStoredArticles(articles: StoredArticle[]): StoredArticle[] {
