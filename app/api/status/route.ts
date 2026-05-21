@@ -24,13 +24,19 @@ export async function GET(request: Request) {
     const state = await loadState();
     const visible = getVisibleArticles(state.articles);
 
+    const storedSentBefore = Object.keys(state.sent).length;
+
     let runResult = null;
     if (run) {
       runResult = await runNewsCycle();
     }
 
+    const stateAfter = run ? await loadState() : state;
+
     return NextResponse.json({
       ok: true,
+      schedule: "github-actions-10min",
+      scheduleDoc: "/docs/SCHEDULE-FREE.md",
       storageBackend: getActiveStorageBackend(),
       redisConfigured: isRedisConfigured(),
       storageReady: canPersistState(),
@@ -38,9 +44,10 @@ export async function GET(request: Request) {
       today: todayKST(),
       yesterday: yesterdayKST(),
       collectedNow: collected.length,
-      storedArticles: state.articles.length,
-      storedSent: Object.keys(state.sent).length,
-      visibleOnWeb: visible.length,
+      storedArticles: stateAfter.articles.length,
+      storedSent: storedSentBefore,
+      storedSentAfter: run ? Object.keys(stateAfter.sent).length : storedSentBefore,
+      visibleOnWeb: getVisibleArticles(stateAfter.articles).length,
       sampleCollected: collected.slice(0, 3).map((a) => ({
         title: a.title.slice(0, 60),
         source: a.source,

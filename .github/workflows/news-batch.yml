@@ -1,4 +1,5 @@
-# 10분마다 수집·저장 → data/news-state.json 커밋
+# 무료 10분 스케줄 (Vercel Cron 불필요)
+# UTC */10 → KST 매시 :00, :10, :20, :30, :40, :50 경
 name: CJ News Batch (10min)
 
 on:
@@ -8,12 +9,17 @@ on:
   repository_dispatch:
     types: [run-news-batch]
 
+concurrency:
+  group: cj-news-batch
+  cancel-in-progress: false
+
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   batch:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
 
@@ -24,20 +30,18 @@ jobs:
 
       - run: npm ci
 
-      - name: Run news batch
+      - name: Run news batch (Redis + Telegram)
+        id: run
         env:
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: npm run batch:once
 
-      - name: Commit and push news-state.json
+      - name: Job summary
+        if: always()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/news-state.json
-          if git diff --staged --quiet; then
-            echo "No changes in news-state.json"
-          else
-            git commit -m "chore: update news state [skip ci]"
-            git push
-          fi
+          echo "## CJ News Batch" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 시각(UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- collected: ${{ steps.run.outputs.collected_count }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- telegram_sent: ${{ steps.run.outputs.telegram_sent }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 스케줄 비활성: Actions → Enable scheduled workflows" >> "$GITHUB_STEP_SUMMARY"

@@ -33,7 +33,7 @@ export default async function HomePage() {
           아래로 이어집니다.
         </p>
         <div className="badge-row">
-          <span className="badge">10분 배치</span>
+          <span className="badge">10분 · GitHub Actions(무료)</span>
           <span className="badge">오늘 {todayCount}건</span>
           <span className="badge">어제 {yesterdayCount}건</span>
           <span className="badge">합계 {articles.length}건</span>
@@ -55,8 +55,9 @@ export default async function HomePage() {
             </>
           ) : (
             <>
-              GitHub Actions(10분) 또는 <code>/api/cron</code>으로 수집을
-              실행하세요. 상태: <a href="/api/status">/api/status</a>
+              무료 스케줄: GitHub Actions「CJ News Batch (10min)」활성화.
+              설정: <code>docs/SCHEDULE-FREE.md</code> · 상태:{" "}
+              <a href="/api/status">/api/status</a>
             </>
           )}
         </p>

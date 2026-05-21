@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeCron } from "@/lib/cron-auth";
 import { runNewsCycle } from "@/lib/runner";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-function authorizeCron(request: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return true;
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${secret}`;
-}
 
 export async function GET(request: NextRequest) {
   if (!authorizeCron(request)) {
