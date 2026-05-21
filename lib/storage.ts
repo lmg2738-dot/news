@@ -53,7 +53,6 @@ export async function saveState(state: AppState): Promise<void> {
   await put(STATE_PATHNAME, JSON.stringify(pruned), {
     access: "public",
     addRandomSuffix: false,
-    allowOverwrite: true,
     contentType: "application/json",
   });
 }
