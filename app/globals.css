@@ -64,14 +64,21 @@ body {
   padding: 1.5rem 1.25rem 3rem;
 }
 
-/* —— Hero —— */
-.hero {
+/* —— Panels (히어로·피드 동일 너비·좌측 정렬) —— */
+.panel {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   padding: 1.5rem 1.5rem 1.25rem;
   box-shadow: var(--shadow-md);
-  margin-bottom: 1.75rem;
+}
+
+.hero.panel {
+  margin-bottom: 1rem;
+}
+
+.feed.panel {
+  margin-bottom: 0;
 }
 
 .hero__brand {
@@ -271,7 +278,7 @@ body {
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 1rem;
-  padding: 0 0.15rem;
+  padding: 0;
 }
 
 .feed__title {
@@ -298,38 +305,16 @@ body {
 }
 
 .timeline__item {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 0.85rem;
-  padding-bottom: 0.85rem;
+  display: block;
+  padding-bottom: 0.75rem;
 }
 
-.timeline__rail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 1.35rem;
-}
-
-.timeline__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--canvas-deep);
-  border: 2px solid var(--line);
-  flex-shrink: 0;
-}
-
-.timeline__line {
-  flex: 1;
-  width: 2px;
-  min-height: 1rem;
-  margin-top: 4px;
-  background: linear-gradient(180deg, var(--line) 0%, transparent 100%);
+.timeline__item:last-child {
+  padding-bottom: 0;
 }
 
 .card {
-  background: var(--surface);
+  background: var(--line-soft);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   padding: 1rem 1.15rem;
@@ -476,7 +461,7 @@ body {
     padding: 1rem 1rem 2.5rem;
   }
 
-  .hero {
+  .panel {
     padding: 1.25rem 1.15rem 1rem;
     border-radius: var(--radius-lg);
   }

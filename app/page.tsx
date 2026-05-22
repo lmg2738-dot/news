@@ -31,7 +31,7 @@ export default async function HomePage() {
   return (
     <div className="shell">
       <main className="page">
-        <header className="hero">
+        <header className="hero panel">
           <div className="hero__brand">
             <span className="hero__mark" aria-hidden>
               CJ
@@ -44,7 +44,7 @@ export default async function HomePage() {
 
           <p className="hero__desc">
             당일·어제 기사를 중복 없이 모읍니다. 최신순으로 정렬되며, 수집·알림은
-            GitHub Actions와 새로고침으로 갱신됩니다.
+            새로고침(1시간 자동)으로 갱신됩니다.
           </p>
 
           <div className="stats" role="list">
@@ -69,7 +69,7 @@ export default async function HomePage() {
             </div>
             <div className="stat stat--meta" role="listitem">
               <span className="stat__label">스케줄</span>
-              <span className="stat__meta">10분 · Actions</span>
+              <span className="stat__meta">1시간 · Actions</span>
             </div>
           </div>
 
@@ -78,7 +78,7 @@ export default async function HomePage() {
           </div>
         </header>
 
-        <section className="feed" aria-labelledby="feed-heading">
+        <section className="feed panel" aria-labelledby="feed-heading">
           <div className="feed__head">
             <h2 id="feed-heading" className="feed__title">
               최신 기사
@@ -115,12 +115,6 @@ export default async function HomePage() {
             <ol className="timeline">
               {articles.map((art, index) => (
                 <li key={art.hash} className="timeline__item">
-                  <div className="timeline__rail" aria-hidden>
-                    <span className="timeline__dot" />
-                    {index < articles.length - 1 ? (
-                      <span className="timeline__line" />
-                    ) : null}
-                  </div>
                   <article
                     className={`card card--${
                       art.day === today ? "today" : "yesterday"
