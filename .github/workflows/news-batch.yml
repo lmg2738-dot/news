@@ -1,10 +1,10 @@
-# 무료 10분 스케줄 (Vercel Cron 불필요)
-# UTC */10 → KST 매시 :00, :10, :20, :30, :40, :50 경
-name: CJ News Batch (10min)
+# 무료 스케줄: 매시 정각 (Vercel Cron 불필요)
+# cron: 0 * * * * (UTC 매시 0분) → KST(UTC+9) 매시 정각 00분
+name: CJ News Batch (hourly)
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
   repository_dispatch:
     types: [run-news-batch]
@@ -30,6 +30,21 @@ jobs:
 
       - run: npm ci
 
+      - name: Verify secrets
+        env:
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -e
+          missing=0
+          [ -z "$UPSTASH_REDIS_REST_URL" ] && echo "::error::UPSTASH_REDIS_REST_URL secret 없음" && missing=1
+          [ -z "$UPSTASH_REDIS_REST_TOKEN" ] && echo "::error::UPSTASH_REDIS_REST_TOKEN secret 없음" && missing=1
+          [ -z "$TELEGRAM_BOT_TOKEN" ] && echo "::error::TELEGRAM_BOT_TOKEN secret 없음" && missing=1
+          [ -z "$TELEGRAM_CHAT_ID" ] && echo "::error::TELEGRAM_CHAT_ID secret 없음" && missing=1
+          exit $missing
+
       - name: Run news batch (Redis + Telegram)
         id: run
         env:
@@ -43,8 +58,11 @@ jobs:
       - name: Job summary
         if: always()
         run: |
-          echo "## CJ News Batch" >> "$GITHUB_STEP_SUMMARY"
-          echo "- 시각(UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_STEP_SUMMARY"
+          echo "## CJ News Batch (hourly)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- KST: $(TZ=Asia/Seoul date +%Y-%m-%dT%H:%M:%S)" >> "$GITHUB_STEP_SUMMARY"
           echo "- collected: ${{ steps.run.outputs.collected_count }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- telegram_sent: ${{ steps.run.outputs.telegram_sent }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- 스케줄 비활성: Actions → Enable scheduled workflows" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "- Actions → Settings → Secrets 및 스케줄 활성화 확인" >> "$GITHUB_STEP_SUMMARY"
+          fi

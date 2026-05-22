@@ -46,7 +46,7 @@ async function main() {
     );
   } else if (notSent.length > 0) {
     console.log(
-      "  → 미전송 기사 있음. GitHub Actions 10분 배치 또는 Vercel env 확인."
+      "  → 미전송 기사 있음. GitHub Actions 매시 배치 또는 Vercel env 확인."
     );
   }
 }

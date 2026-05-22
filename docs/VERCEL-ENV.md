@@ -27,7 +27,7 @@ Production · Preview · Development 모두에 동일하게 넣는 것을 권장
 
 ---
 
-## GitHub Actions (10분 배치, 필수)
+## GitHub Actions (매시 정각 배치, 필수)
 
 **Repository → Settings → Secrets and variables → Actions → New repository secret**
 

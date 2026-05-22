@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      schedule: "github-actions-10min",
+      schedule: "github-actions-hourly-kst",
       scheduleDoc: "/docs/SCHEDULE-FREE.md",
       envDoc: "/docs/VERCEL-ENV.md",
       storageBackend: getActiveStorageBackend(),

@@ -47,7 +47,7 @@ export default async function HomePage() {
 
           <p className="hero__desc">
             당일·어제 기사를 중복 없이 모읍니다. 최신순으로 정렬되며, 수집·알림은
-            새로고침(1시간 자동)으로 갱신됩니다.
+            GitHub Actions(매시 정각)와 새로고침(탭 열림 시 1시간)으로 갱신됩니다.
           </p>
 
           <div className="stats" role="list">

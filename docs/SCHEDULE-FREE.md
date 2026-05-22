@@ -1,61 +1,53 @@
-# 무료 10분 자동 배치 (Vercel Cron 없이)
+# 무료 자동 배치 (Vercel Cron 없이)
 
-Vercel **Cron Jobs는 유료 플랜** 기능입니다. 이 프로젝트는 아래 **무료** 방식만 사용합니다.
+Vercel **Cron Jobs는 유료 플랜** 기능입니다. 이 프로젝트는 **GitHub Actions** 스케줄을 사용합니다.
 
-## 1) 기본: GitHub Actions (권장)
+## 1) GitHub Actions (권장)
 
 워크플로: [`.github/workflows/news-batch.yml`](../.github/workflows/news-batch.yml)
 
 | 항목 | 내용 |
 |------|------|
-| 주기 | 10분 (`*/10 * * * *`, **UTC**) |
-| 동작 | `npm run batch:once` → Upstash Redis 저장 + 텔레그램(회당 최대 20건, 미전송만) |
+| 주기 | **매시 정각** — `0 * * * *` (UTC 0분) = **KST 매시 00분** |
+| 동작 | `npm run batch:once` → Upstash Redis + 텔레그램(미전송 최대 20건) |
 | 비용 | GitHub Actions 무료 한도 내 |
+
+### KST 정각 예시
+
+| UTC | KST |
+|-----|-----|
+| 00:00 | 09:00 |
+| 01:00 | 10:00 |
+| 15:00 | 00:00 (자정) |
 
 ### 최초 1회 확인 (필수)
 
-1. GitHub 저장소 → **Actions** → **CJ News Batch (10min)**
-2. 상단에 **「Scheduled workflows are disabled」** 가 있으면 → **Enable**
-3. **Run workflow** 로 수동 1회 실행 → 로그에 `텔레그램 N건` 등 확인
-4. 이후 **10분마다** Run이 자동 생성되는지 확인 (KST로는 :00, :10, :20 … 근처)
+1. GitHub 저장소 → **Actions** → **CJ News Batch (hourly)**
+2. **「Scheduled workflows are disabled」** → **Enable**
+3. **Run workflow** 수동 실행 → 초록 체크, Summary에 `telegram_sent` 확인
+4. **Secrets** 4개 설정 (`docs/VERCEL-ENV.md` 참고)
+5. 이후 **매시 정각(KST)** 에 Run이 생기는지 확인
 
-### Secrets (필수)
+### Run이 없을 때
 
-`docs/VERCEL-ENV.md` 참고 — Actions에 Upstash·텔레그램 Secrets 설정 (config.json 미사용).
-
-### 수동 실행만 알림이 올 때
-
-- Actions 스케줄이 꺼져 있거나
-- 저장소가 오래 비활성이라 스케줄이 중단된 경우
-
-→ 위 **Enable** 후 20~30분 관찰 (브라우저에서 `/api/status?run=1` 반복 호출은 하지 마세요 — 그때마다 최대 20건씩 나갑니다).
+- 저장소 60일 비활성 → 스케줄 비활성화
+- Secrets 누락 → Verify secrets 단계에서 빨간 X
+- `main` 브랜치가 아닌 경우 스케줄 미동작
 
 ---
 
-## 2) 백업: cron-job.org (무료 HTTP 크론)
+## 2) 웹 탭 1시간 자동 (보조)
 
-GitHub Actions가 막혔을 때 Vercel URL만 주기 호출합니다.
+페이지 **새로고침** 버튼 컴포넌트가 탭이 **열려 있을 때만** 1시간마다 `/api/status?run=1` 호출.
 
-1. [cron-job.org](https://cron-job.org) 가입 (무료)
-2. **Create cronjob**
-   - URL: `https://news-iota-peach.vercel.app/api/cron`
-   - Schedule: every 10 minutes
-3. Vercel 환경 변수에 `CRON_SECRET` 설정 (임의 긴 문자열)
-4. cron-job URL을 다음 중 하나로 설정:
-   - Header: `Authorization: Bearer <CRON_SECRET>`
-   - 또는 Query: `https://.../api/cron?secret=<CRON_SECRET>`
-
-`CRON_SECRET`이 **없으면** 누구나 `/api/cron`을 호출할 수 있어 **반드시 설정**하세요.
+- PC에서 사이트를 닫으면 동작 안 함
+- 24시간 무인 수집은 **GitHub Actions** 사용
 
 ---
 
-## 3) 로컬 / 점검용 (자동 아님)
+## 3) 백업: cron-job.org
 
-| 용도 | 명령/URL |
-|------|----------|
-| 상태만 | `GET /api/status` |
-| 배치 1회 (수동) | `GET /api/status?run=1` 또는 `npm run batch:once` |
-| Vercel 원격 1회 | `APP_URL=... CRON_SECRET=... npm run batch:remote` |
+GitHub Actions가 막혔을 때 Vercel `/api/cron` HTTP 호출. `docs/VERCEL-ENV.md`의 `CRON_SECRET` 참고.
 
 ---
 
@@ -64,6 +56,5 @@ GitHub Actions가 막혔을 때 Vercel URL만 주기 호출합니다.
 | 상황 | 의미 |
 |------|------|
 | Actions Run 없음 | 스케줄 비활성 → Enable |
-| Run 성공, 로그 `텔레그램 0건` | 새 기사 없음 또는 이미 `sent`에 있음 (정상) |
-| Run 성공, `텔레그램 N건` (N≤20) | 정상, 텔레그램 앱에서 확인 |
-| `/api/status?run=1`만 알림 | 자동 스케줄 미동작 → 1번·2번 점검 |
+| Run 성공, `telegram_sent: 0` | 새 기사 없음 또는 이미 전송됨 |
+| Run 실패, Secrets 오류 | GitHub Secrets 4개 추가 |
