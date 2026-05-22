@@ -8,8 +8,10 @@ import {
   getVisibleArticles,
   loadState,
 } from "@/lib/storage";
+import { countSentiments, analyzeSentiment } from "@/lib/sentiment";
 import { APP_VERSION } from "@/lib/version";
 import { RefreshButton } from "./components/RefreshButton";
+import { SentimentBadge, SentimentStatIcon } from "./components/SentimentBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,7 @@ export default async function HomePage() {
   const yesterday = yesterdayKST();
   const todayCount = articles.filter((a) => a.day === today).length;
   const yesterdayCount = articles.filter((a) => a.day === yesterday).length;
+  const sentimentCounts = countSentiments(articles);
   const pageUpdated = new Intl.DateTimeFormat("ko-KR", {
     timeZone: "Asia/Seoul",
     dateStyle: "medium",
@@ -73,6 +76,42 @@ export default async function HomePage() {
             </div>
           </div>
 
+          <div className="stats stats--sentiment" role="list">
+            <div className="stat stat--positive" role="listitem">
+              <span className="stat__label">
+                <SentimentStatIcon sentiment="positive" />
+                긍정
+              </span>
+              <span className="stat__value stat__value--positive">
+                {sentimentCounts.positive}
+              </span>
+              <span className="stat__unit">건</span>
+            </div>
+            <div className="stat stat--negative" role="listitem">
+              <span className="stat__label">
+                <SentimentStatIcon sentiment="negative" />
+                부정
+              </span>
+              <span className="stat__value stat__value--negative">
+                {sentimentCounts.negative}
+              </span>
+              <span className="stat__unit">건</span>
+            </div>
+            <div className="stat stat--neutral" role="listitem">
+              <span className="stat__label">
+                <SentimentStatIcon sentiment="neutral" />
+                중립
+              </span>
+              <span className="stat__value stat__value--neutral">
+                {sentimentCounts.neutral}
+              </span>
+              <span className="stat__unit">건</span>
+            </div>
+          </div>
+          <p className="sentiment-note">
+            제목 키워드 기준 자동 분류 (AI 아님)
+          </p>
+
           <div className="hero__actions">
             <RefreshButton />
           </div>
@@ -113,21 +152,26 @@ export default async function HomePage() {
             </div>
           ) : (
             <ol className="timeline">
-              {articles.map((art, index) => (
+              {articles.map((art, index) => {
+                const sentiment = analyzeSentiment(art.title);
+                return (
                 <li key={art.hash} className="timeline__item">
                   <article
                     className={`card card--${
                       art.day === today ? "today" : "yesterday"
-                    }`}
+                    } card--sentiment-${sentiment}`}
                   >
                     <header className="card__head">
-                      <span
-                        className={`day-chip ${
-                          art.day === today ? "today" : "yesterday"
-                        }`}
-                      >
-                        {formatDisplayDay(art.day)}
-                      </span>
+                      <div className="card__tags">
+                        <span
+                          className={`day-chip ${
+                            art.day === today ? "today" : "yesterday"
+                          }`}
+                        >
+                          {formatDisplayDay(art.day)}
+                        </span>
+                        <SentimentBadge sentiment={sentiment} />
+                      </div>
                       <time className="card__time" dateTime={art.addedAt}>
                         {new Intl.DateTimeFormat("ko-KR", {
                           timeZone: "Asia/Seoul",
@@ -153,7 +197,8 @@ export default async function HomePage() {
                     </footer>
                   </article>
                 </li>
-              ))}
+              );
+              })}
             </ol>
           )}
         </section>
