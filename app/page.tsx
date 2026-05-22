@@ -10,6 +10,7 @@ import {
   loadState,
 } from "@/lib/storage";
 import { APP_VERSION } from "@/lib/version";
+import { RefreshButton } from "./components/RefreshButton";
 
 export const dynamic = "force-dynamic";
 
@@ -27,11 +28,16 @@ export default async function HomePage() {
   return (
     <main className="page">
       <header className="header">
-        <h1>CJ 뉴스 알림</h1>
-        <p>
-          당일·어제 기사를 중복 없이 누적합니다. 최신 기사가 맨 위, 이전 기사가
-          아래로 이어집니다.
-        </p>
+        <div className="header-top">
+          <div className="header-intro">
+            <h1>CJ 뉴스 알림</h1>
+            <p>
+              당일·어제 기사를 중복 없이 누적합니다. 최신 기사가 맨 위, 이전
+              기사가 아래로 이어집니다.
+            </p>
+          </div>
+          <RefreshButton />
+        </div>
         <div className="badge-row">
           <span className="badge">10분 · GitHub Actions(무료)</span>
           <span className="badge">오늘 {todayCount}건</span>

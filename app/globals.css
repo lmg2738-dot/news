@@ -50,6 +50,76 @@ a:hover {
   margin-bottom: 2rem;
 }
 
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.header-intro {
+  flex: 1;
+  min-width: 0;
+}
+
+.refresh-wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.refresh-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  border-color: #fcd9b8;
+  box-shadow: var(--shadow-hover);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.refresh-status {
+  margin: 0;
+  font-size: 0.72rem;
+  max-width: 11rem;
+  text-align: right;
+  line-height: 1.35;
+}
+
+.refresh-status--ok {
+  color: var(--today);
+}
+
+.refresh-status--error {
+  color: #dc2626;
+}
+
+.refresh-status--loading {
+  color: var(--muted);
+}
+
+.refresh-hint {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
 .header h1 {
   margin: 0 0 0.35rem;
   font-size: 1.75rem;
@@ -198,4 +268,20 @@ a:hover {
   font-size: 0.8rem;
   color: var(--muted);
   text-align: center;
+}
+
+@media (max-width: 560px) {
+  .header-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .refresh-wrap {
+    align-items: stretch;
+  }
+
+  .refresh-status {
+    max-width: none;
+    text-align: left;
+  }
 }
