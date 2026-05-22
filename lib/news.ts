@@ -11,7 +11,8 @@ const GOOGLE_NEWS_RSS =
 const NAVER_NEWS_URL =
   "https://search.naver.com/search.naver?where=news&query={query}&sort=1&pd=4";
 
-export const MAX_NEW_PER_CYCLE = 5;
+/** 회당 텔레그램 전송 상한 (중복 제거 후, 미전송 기사만) */
+export const MAX_NEW_PER_CYCLE = 20;
 export const MAX_SENT_HISTORY = 5000;
 
 export type RawArticle = {

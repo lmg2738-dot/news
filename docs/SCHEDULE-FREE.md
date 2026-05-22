@@ -9,14 +9,14 @@ Vercel **Cron Jobs는 유료 플랜** 기능입니다. 이 프로젝트는 아�
 | 항목 | 내용 |
 |------|------|
 | 주기 | 10분 (`*/10 * * * *`, **UTC**) |
-| 동작 | `npm run batch:once` → Upstash Redis 저장 + 텔레그램(회당 최대 5건) |
+| 동작 | `npm run batch:once` → Upstash Redis 저장 + 텔레그램(회당 최대 20건, 미전송만) |
 | 비용 | GitHub Actions 무료 한도 내 |
 
 ### 최초 1회 확인 (필수)
 
 1. GitHub 저장소 → **Actions** → **CJ News Batch (10min)**
 2. 상단에 **「Scheduled workflows are disabled」** 가 있으면 → **Enable**
-3. **Run workflow** 로 수동 1회 실행 → 로그에 `텔레그램 5건` 등 확인
+3. **Run workflow** 로 수동 1회 실행 → 로그에 `텔레그램 N건` 등 확인
 4. 이후 **10분마다** Run이 자동 생성되는지 확인 (KST로는 :00, :10, :20 … 근처)
 
 ### Secrets (필수)
@@ -28,7 +28,7 @@ Vercel **Cron Jobs는 유료 플랜** 기능입니다. 이 프로젝트는 아�
 - Actions 스케줄이 꺼져 있거나
 - 저장소가 오래 비활성이라 스케줄이 중단된 경우
 
-→ 위 **Enable** 후 20~30분 관찰 (브라우저에서 `/api/status?run=1` 반복 호출은 하지 마세요 — 그때마다 텔레그램 5건이 나갑니다).
+→ 위 **Enable** 후 20~30분 관찰 (브라우저에서 `/api/status?run=1` 반복 호출은 하지 마세요 — 그때마다 최대 20건씩 나갑니다).
 
 ---
 
@@ -65,5 +65,5 @@ GitHub Actions가 막혔을 때 Vercel URL만 주기 호출합니다.
 |------|------|
 | Actions Run 없음 | 스케줄 비활성 → Enable |
 | Run 성공, 로그 `텔레그램 0건` | 새 기사 없음 또는 이미 `sent`에 있음 (정상) |
-| Run 성공, `텔레그램 5건` | 정상, 텔레그램 앱에서 확인 |
+| Run 성공, `텔레그램 N건` (N≤20) | 정상, 텔레그램 앱에서 확인 |
 | `/api/status?run=1`만 알림 | 자동 스케줄 미동작 → 1번·2번 점검 |
