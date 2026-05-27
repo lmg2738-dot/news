@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { minStorageDayKST } from "./dates";
+import { getRedisStateKey } from "./app-meta";
 import { getRedis, isRedisConfigured } from "./redis-client";
 import { dedupeArticles, prepareVisibleArticles, sortNewestFirst } from "./articles";
 import { getGitHubRepository, getGitHubToken } from "./github-token";
@@ -13,7 +14,9 @@ import { trimSentHistory } from "./news";
 
 export const STATE_FILE = "data/news-state.json";
 const STATE_BRANCH = process.env.STATE_BRANCH ?? "main";
-const REDIS_KEY = "cj-news:state";
+function redisKey(): string {
+  return getRedisStateKey();
+}
 
 export type AppState = {
   sent: Record<string, string>;
@@ -78,7 +81,7 @@ async function loadFromRedis(): Promise<AppState | null> {
   const redis = getRedis();
   if (!redis) return null;
   try {
-    const data = await redis.get<AppState>(REDIS_KEY);
+    const data = await redis.get<AppState>(redisKey());
     return data ? parseState(data) : null;
   } catch {
     return null;
@@ -113,7 +116,7 @@ function writeLocalState(state: AppState): void {
 async function saveToRedis(state: AppState): Promise<void> {
   const redis = getRedis();
   if (!redis) throw new Error("Redis not configured");
-  await redis.set(REDIS_KEY, state);
+  await redis.set(redisKey(), state);
 }
 
 async function saveToGitHubApi(state: AppState): Promise<void> {
