@@ -16,10 +16,7 @@ Production · Preview · Development 모두에 동일하게 넣는 것을 권장
 | `UPSTASH_REDIS_REST_URL` | ✅ | Redis REST URL | [Upstash Console](https://console.upstash.com) → DB → REST |
 | `UPSTASH_REDIS_REST_TOKEN` | ✅ | Redis REST 토큰 | 동일 |
 | `CRON_SECRET` | 권장 | `/api/cron` 호출 비밀번호 | 임의 긴 문자열 (32자 이상) |
-| `NEWS_KEYWORDS` | 선택 | 검색 키워드(OR) | 기본 `CJ`. **쉼표로 구분** |
-| `APP_TITLE` | 선택 | 웹 제목 | 기본 `CJ 뉴스 알림` |
-| `APP_BRAND_MARK` | 선택 | 로고 글자(최대 4자) | 기본 `CJ` |
-| `REDIS_STATE_KEY` | 권장 | Redis 저장 키 | 인스턴스마다 다르게 (`cj-news:state` / `lotte-news:state`) |
+| `NEWS_KEYWORDS` | 선택 | 검색 키워드(OR) | 기본 `CJ`. **쉼표로 구분** — 키워드마다 Google·네이버를 각각 검색 후 합침 |
 
 ### Vercel에 넣을 때 체크리스트
 

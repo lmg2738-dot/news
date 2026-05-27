@@ -1,4 +1,3 @@
-import { getRedisStateKey } from "../lib/app-meta";
 import { getRedis } from "../lib/redis-client";
 import { getConfig } from "../lib/config";
 import { collectArticles } from "../lib/news";
@@ -30,7 +29,7 @@ async function main() {
     const raw = await redis.get<{
       sent: Record<string, string>;
       articles: unknown[];
-    }>(getRedisStateKey());
+    }>("cj-news:state");
     if (raw) {
       console.log("\n[Upstash Redis 직접 조회]");
       console.log("  articles:", raw.articles?.length ?? 0);

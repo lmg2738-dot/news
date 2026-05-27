@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
-import { getAppTitle } from "@/lib/app-meta";
 import "./globals.css";
 
 const notoSans = Noto_Sans_KR({
@@ -11,8 +10,8 @@ const notoSans = Noto_Sans_KR({
 });
 
 export const metadata: Metadata = {
-  title: getAppTitle(),
-  description: `${getAppTitle()} — 당일·어제 뉴스 모니터`,
+  title: "CJ 뉴스 알림",
+  description: "CJ 관련 최신 뉴스 (전일·당일)",
   themeColor: "#0f172a",
 };
 

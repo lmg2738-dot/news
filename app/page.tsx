@@ -8,7 +8,6 @@ import {
   getVisibleArticles,
   loadState,
 } from "@/lib/storage";
-import { getAppBrandMark, getAppTitle } from "@/lib/app-meta";
 import { countSentiments, analyzeSentiment } from "@/lib/sentiment";
 import { APP_VERSION } from "@/lib/version";
 import { RefreshButton } from "./components/RefreshButton";
@@ -17,8 +16,6 @@ import { SentimentBadge, SentimentStatIcon } from "./components/SentimentBadge";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const appTitle = getAppTitle();
-  const brandMark = getAppBrandMark();
   const storageReady = canPersistState();
   const state = await loadState();
   const articles = getVisibleArticles(state.articles);
@@ -40,11 +37,11 @@ export default async function HomePage() {
         <header className="hero panel">
           <div className="hero__brand">
             <span className="hero__mark" aria-hidden>
-              {brandMark.slice(0, 4)}
+              CJ
             </span>
             <div className="hero__titles">
               <p className="hero__eyebrow">News Monitor</p>
-              <h1 className="hero__title">{appTitle}</h1>
+              <h1 className="hero__title">뉴스 알림</h1>
             </div>
           </div>
 
