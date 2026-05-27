@@ -15,6 +15,7 @@ Production · Preview · Development 모두에 동일하게 넣는 것을 권장
 | `TELEGRAM_CHAT_ID` | ✅ | 알림 받을 채팅 ID | 봇과 대화 후 `getUpdates` 등 |
 | `UPSTASH_REDIS_REST_URL` | ✅ | Redis REST URL | [Upstash Console](https://console.upstash.com) → DB → REST |
 | `UPSTASH_REDIS_REST_TOKEN` | ✅ | Redis REST 토큰 | 동일 |
+| `REDIS_INSTANCE_ID` | 권장(공유 DB) | 프로젝트 구분 | CJ: `cj` (기본), 다른 repo: `lotte` 등 → `docs/SHARED-UPSTASH.md` |
 | `CRON_SECRET` | 권장 | `/api/cron` 호출 비밀번호 | 임의 긴 문자열 (32자 이상) |
 | `NEWS_KEYWORDS` | 선택 | 검색 키워드(OR) | 기본 `CJ`. **쉼표로 구분** — 키워드마다 Google·네이버를 각각 검색 후 합침 |
 

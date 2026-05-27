@@ -10,6 +10,8 @@ import {
   getStatePublicUrl,
   getVisibleArticles,
   loadState,
+  getRedisInstanceId,
+  getRedisStateKey,
 } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +42,8 @@ export async function GET(request: Request) {
       envDoc: "/docs/VERCEL-ENV.md",
       storageBackend: getActiveStorageBackend(),
       redisConfigured: isRedisConfigured(),
+      redisInstanceId: getRedisInstanceId(),
+      redisStateKey: getRedisStateKey(),
       storageReady: canPersistState(),
       stateUrl: getStatePublicUrl(),
       today: todayKST(),

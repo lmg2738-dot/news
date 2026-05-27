@@ -1,6 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { minStorageDayKST } from "./dates";
+import {
+  getRedisInstanceId,
+  getRedisStateKey,
+} from "./instance";
 import { getRedis, isRedisConfigured } from "./redis-client";
 import { dedupeArticles, prepareVisibleArticles, sortNewestFirst } from "./articles";
 import { getGitHubRepository, getGitHubToken } from "./github-token";
@@ -13,17 +17,23 @@ import { trimSentHistory } from "./news";
 
 export const STATE_FILE = "data/news-state.json";
 const STATE_BRANCH = process.env.STATE_BRANCH ?? "main";
-const REDIS_KEY = "cj-news:state";
-
 export type AppState = {
+  /** Upstash 공유 DB 시 프로젝트 구분용 (instanceId 불일치 시 무시) */
+  instanceId?: string;
   sent: Record<string, string>;
   articles: StoredArticle[];
 };
 
+export { getRedisInstanceId, getRedisStateKey } from "./instance";
+
 export type StorageBackend = "redis" | "github" | "local" | "none";
 
 function defaultState(): AppState {
-  return { sent: {}, articles: [] };
+  return {
+    instanceId: getRedisInstanceId(),
+    sent: {},
+    articles: [],
+  };
 }
 
 function localStatePath(): string {
@@ -57,8 +67,16 @@ export function isBlobConfigured(): boolean {
 }
 
 function parseState(data: AppState): AppState {
+  const expected = getRedisInstanceId();
+  if (data.instanceId && data.instanceId !== expected) {
+    console.warn(
+      `[storage] Redis instanceId 불일치: 기대=${expected}, 저장값=${data.instanceId} — 빈 상태로 처리`
+    );
+    return defaultState();
+  }
   const articles = Array.isArray(data.articles) ? data.articles : [];
   return {
+    instanceId: expected,
     sent: data.sent ?? {},
     articles: normalizeStoredArticles(articles),
   };
@@ -78,7 +96,7 @@ async function loadFromRedis(): Promise<AppState | null> {
   const redis = getRedis();
   if (!redis) return null;
   try {
-    const data = await redis.get<AppState>(REDIS_KEY);
+    const data = await redis.get<AppState>(getRedisStateKey());
     return data ? parseState(data) : null;
   } catch {
     return null;
@@ -113,7 +131,10 @@ function writeLocalState(state: AppState): void {
 async function saveToRedis(state: AppState): Promise<void> {
   const redis = getRedis();
   if (!redis) throw new Error("Redis not configured");
-  await redis.set(REDIS_KEY, state);
+  await redis.set(getRedisStateKey(), {
+    ...state,
+    instanceId: getRedisInstanceId(),
+  });
 }
 
 async function saveToGitHubApi(state: AppState): Promise<void> {
@@ -195,6 +216,7 @@ export type SaveMode = "redis" | "local" | "api" | "workflow";
 export async function saveState(state: AppState): Promise<SaveMode> {
   const minDay = minStorageDayKST();
   const pruned: AppState = {
+    instanceId: getRedisInstanceId(),
     sent: trimSentHistory(pruneSentForStorage(state.sent, minDay)),
     articles: pruneArticlesForStorage(state.articles, minDay),
   };
